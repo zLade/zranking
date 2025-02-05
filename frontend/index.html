@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion du Tournoi</title>
+    
+    <!-- Styles et Librairies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <style>
+        body { background-color: #0f172a; color: white; margin-top: 20px; }
+        .container { max-width: 800px; }
+        .card { background-color: #1e293b; border: 1px solid #334155; }
+        .list-group-item { background-color: #1e293b; color: #e0e7ff; }
+        .btn-primary { background-color: #1e3a8a; border: none; }
+        .btn-primary:hover { background-color: #3b82f6; }
+        .btn-danger { background-color: #b91c1c; }
+        .spinner { display: none; }
+        .spinner-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; 
+            justify-content: center; z-index: 1000; display: none; }
+		h4, #logged-in-user, label { color: white; }
+    </style>
+</head>
+<body>
+    <!-- Protection contre l'autocomplétion -->
+	<input type="text" name="fakeusernameremembered" style="display: none;">
+	<input type="password" name="fakepasswordremembered" style="display: none;">
+
+
+    <div class="container mt-3">
+        <h1 class="text-center mb-4">🏆 Zlade's Ranking System</h1>
+
+        <!-- Onglets de navigation -->
+        <ul class="nav nav-tabs" id="myTabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#scores">Scores</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#classement">Classement</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#administration">Admin</button></li>
+            <li class="nav-item"><button class="nav-link" id="tabJoueurs" data-bs-toggle="tab" data-bs-target="#joueurs" style="display: none;">Joueurs</button></li>
+            <li class="nav-item"><button class="nav-link" id="tabJournees" data-bs-toggle="tab" data-bs-target="#journees" style="display: none;">Journées</button></li>
+        </ul>
+
+        <div class="tab-content mt-3">
+            <!-- Onglet Joueurs -->
+            <div class="tab-pane fade" id="joueurs">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4>Ajouter un joueur</h4>
+                        <div class="input-group">
+                            <input type="text" id="nomJoueur" class="form-control" placeholder="Nom du joueur" autocomplete="off">
+                            <button class="btn btn-primary" onclick="ajouterJoueur()">Ajouter</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4>Joueurs inscrits</h4>
+                        <ul id="listeJoueurs" class="list-group mb-3"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Journées -->
+            <div class="tab-pane fade" id="journees">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4>Ajouter une journée</h4>
+                        <div class="input-group">
+                            <input type="text" id="nouvelleJournee" class="form-control" placeholder="Sélectionnez une date" autocomplete="off">
+                            <button class="btn btn-primary" onclick="ajouterJournee()">Ajouter</button>
+                        </div>
+                    </div>
+                </div>
+					<div class="card mb-3">
+						<div class="card-body">
+							<h4>Journées</h4>
+							<ul id="listeJournees" class="list-group mb-3"></ul>
+						</div>
+					</div>
+				<div class="card mb-3">
+					<div class="card-body">
+						<h4>Nombre de jeux de la journée</h4>
+						<label for="selectJournee">Sélectionner une journée:</label>
+						<!--<select id="selectJournee" class="form-select" onchange="fetchJeuxJournee(this.value)">-->
+						<select id="selectJournee" class="form-select" onchange="onJourneeChange()">
+							<option value="">Sélectionner une journée</option>
+						</select>
+
+						<label for="nombreJeux" class="mt-2">Nombre de jeux (1 à 9):</label>
+						<input type="number" id="nombreJeux" class="form-control" min="1" max="9" value="3">
+						<button class="btn btn-primary mt-2" onclick="modifierNombreJeux()">Mettre à jour</button><br><br>
+						<h4>Jeux de la Journée</h4>
+						<div id="jeuxJourneeContainer"></div>
+					</div>
+				</div>
+            </div>
+
+            <!-- Onglet Scores -->
+            <div class="tab-pane fade show active" id="scores">
+                <h4>Scores par journée</h4>
+                <select id="selectJourneeScores" class="form-select" onchange="fetchScores()">
+                    <option value="">Sélectionner une journée</option>
+                </select><br><br>
+                <div id="scoresContent" class="table-responsive"></div>
+            </div>
+
+            <!-- Onglet Classement -->
+            <div class="tab-pane fade" id="classement">
+                <h4>Classement</h4>
+                <ul id="classementListe" class="list-group mb-3"></ul>
+            </div>
+
+            <!-- Onglet Administration -->
+            <div class="tab-pane fade" id="administration">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4>Connexion</h4>
+                        <div id="login-form">
+                            <input type="text" id="username" class="form-control mb-2" placeholder="Nom d'utilisateur">
+                            <input type="password" id="password" class="form-control mb-2" placeholder="Mot de passe">
+                            <input type="hidden" id="csrf_token" name="csrf_token">
+                            <button class="btn btn-primary" onclick="login()">Connexion</button>
+                        </div>
+                        <div id="logout-section" style="display: none;">
+                            <p id="logged-in-user"></p>
+                            <button class="btn btn-danger" onclick="logout()">Déconnexion</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Admin CSV -->
+                <div class="card mb-3">
+					<div class="card-body">
+						<div id="admin-csv-export" style="display: none;">
+							<h4>Export CSV</h4>
+							<button id="export-csv" class="btn btn-primary" onclick="exporterCSV()">Exporter CSV</button><br>
+						</div>
+					</div>
+				</div>
+
+                <div class="card mb-3">
+					<div class="card-body">
+						<div id="admin-csv-import" style="display: none;">
+							<h4>Import CSV</h4>
+							<input type="file" id="csvFileInput" class="form-control mt-2">
+							<button id="import-csv" class="btn btn-primary mt-2" onclick="importerCSV()">Importer CSV</button>
+						</div>
+					</div>
+				</div>
+
+                <!-- Section Modifier Jeux -->
+                <div id="admin-jeux" style="display: none;">
+                    <h4>Modifier les noms des jeux</h4>
+                    <div id="listeJeux"></div>
+                </div>
+
+                <!-- Changer le mot de passe -->
+				<div class="card mb-3">
+					<div class="card-body">
+						<div id="change-password-section" style="display: none;">
+							<h4>Changer le mot de passe</h4>
+							<input type="password" id="old-password" class="form-control mb-2" placeholder="Ancien mot de passe">
+							<input type="password" id="new-password" class="form-control mb-2" placeholder="Nouveau mot de passe">
+							<input type="password" id="confirm-password" class="form-control mb-2" placeholder="Confirmation du mot de passe">
+							<button class="btn btn-primary" onclick="changePassword()">Changer</button>
+						</div>
+					</div>
+				</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicateur de chargement -->
+	<div id="spinner-container" class="spinner-container">
+		<div class="spinner-border text-primary" role="status">
+			<span class="visually-hidden">Chargement...</span>
+		</div>
+	</div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="script.js"></script>
+</body>
+</html>
