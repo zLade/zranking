@@ -12,7 +12,7 @@ import tempfile
 # Configuration de l'application Flask
 app = Flask(__name__, static_folder="frontend")
 CORS(app, supports_credentials=True) # Autoriser les requêtes cross-origin (à configurer correctement en production)
-app.secret_key = "maclesecretedesession12345zladezlade"  # Clé secrète pour les sessions (à changer en production)
+app.secret_key = "mysecretkey"  # Clé secrète pour les sessions (à changer en production)
 
 # Configuration de la Session
 app.config["SESSION_TYPE"] = "filesystem"
@@ -31,7 +31,7 @@ session_instance.init_app(app)
 
 # Configuration de la protection CSRF
 app.config['WTF_CSRF_ENABLED'] = True
-app.config['WTF_CSRF_SECRET_KEY'] = "secret32434554632655363keycsrfzlade"  # Clé secrète pour CSRF (à changer en production)
+app.config['WTF_CSRF_SECRET_KEY'] = "mysecretcsrfkey"  # Clé secrète pour CSRF (à changer en production)
 #csrf = CSRFProtect(app)
 
 # Configuration des cookies de session
